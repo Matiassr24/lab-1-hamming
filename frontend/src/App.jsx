@@ -9,33 +9,37 @@ function App() {
 
   // 1. Definimos la función que se comunica con el backend (puerto 8081)
   const enviarAlBackend = async (archivoSeleccionado, accionSeleccionada) => {
-    if (!archivoSeleccionado) return; // Por si acaso no hay archivo
+  const formData = new FormData();
+  formData.append('file', archivoSeleccionado);
+  formData.append('accion', accionSeleccionada);
 
-    const formData = new FormData();
-    formData.append('file', archivoSeleccionado);
-    formData.append('accion', accionSeleccionada);
+  try {
+    const respuesta = await fetch('http://localhost:8081/api/hamming/procesar', {
+      method: 'POST',
+      body: formData,
+    });
 
-    try {
-      console.log("Enviando petición a Java...");
-      const respuesta = await fetch('http://localhost:8081/api/hamming/procesar', {
-        method: 'POST',
-        body: formData,
-      });
+    if (respuesta.ok) {
+  const blob = await respuesta.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
 
-      if (respuesta.ok) {
-        const textoRespuesta = await respuesta.text();
-        console.log("ÉXITO:", textoRespuesta);
-        // Tiramos una alerta en el navegador para que veas que llegó bien
-        alert("Respuesta del Backend: " + textoRespuesta);
-      } else {
-        console.error("El backend tiró un error:", respuesta.status);
-        alert("El servidor respondió con un error " + respuesta.status);
-      }
-    } catch (error) {
-      console.error("Error de conexión:", error);
-      alert("No se pudo conectar. ¿Asegurate de que Java esté corriendo en el 8081?");
+  // DINAMISMO AQUÍ:
+  // Si la acción es INTRODUCIR_ERROR, le ponemos .HEx, si es PROTEGER_8 le ponemos .HA1
+  let extension = ".txt";
+  if (accionSeleccionada === "PROTEGER_8") extension = ".HA1";
+  if (accionSeleccionada === "INTRODUCIR_ERROR") extension = "E.HA1";
+  if (accionSeleccionada === "DESPROTEGER_8") extension = "_recuperado.txt";
+
+  link.download =  archivoSeleccionado.name.split('.')[0] + extension;
+  link.click();
+      console.log("Archivo descargado con éxito");
     }
-  };
+  } catch (error) {
+    console.error("Error conectando al backend:", error);
+  }
+};
 
   const handleFileDrop = (uploadedFile) => {
     setFile(uploadedFile);

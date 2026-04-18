@@ -5,12 +5,22 @@ import styles from './CargadorArchivos.module.css';
 const CargadorArchivos = ({ onFileDrop }) => {
   const inputRef = useRef(null);
 
+  // 1. Definimos las extensiones que tu laboratorio va a manejar
+  const extensionesPermitidas = ['.txt', '.HA1', '.HA2', '.HA3'];
+
   const manejarCambioArchivo = (evento) => {
     const archivoSeleccionado = evento.target.files[0];
-    if (archivoSeleccionado && archivoSeleccionado.name.endsWith('.txt')) {
-      onFileDrop(archivoSeleccionado);
-    } else {
-      alert("Por favor, subí un archivo de texto (.txt)");
+    
+    if (archivoSeleccionado) {
+      const nombre = archivoSeleccionado.name;
+      // 2. Verificamos si el archivo termina en alguna de nuestras extensiones
+      const esValido = extensionesPermitidas.some(ext => nombre.endsWith(ext));
+
+      if (esValido) {
+        onFileDrop(archivoSeleccionado);
+      } else {
+        alert("Archivo no permitido. Usá .txt o archivos protegidos (.HA1, .HA2, .HA3)");
+      }
     }
   };
 
@@ -24,11 +34,12 @@ const CargadorArchivos = ({ onFileDrop }) => {
       >
         <CloudUpload className={styles.iconoNube} />
         <p className={styles.textoSubida}>
-          Haz clic aquí para seleccionar tu archivo .txt
+          Haz clic aquí para seleccionar tu archivo (.txt, .HA1, etc.)
         </p>
+        {/* 3. Actualizamos el atributo accept para que el buscador de Windows los muestre */}
         <input
-          type="file"
-          accept=".txt"
+          type="file" 
+          accept=".txt,.HA1,.HA2,.HA3"
           ref={inputRef}
           onChange={manejarCambioArchivo}
           className={styles.inputOculto}

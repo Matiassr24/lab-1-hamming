@@ -1,16 +1,17 @@
 package com.hamming.backend.controller;
 
 import com.hamming.backend.service.HammingService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/hamming")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173") // El puerto de tu React
 public class HammingController {
 
-    // Así es como vinculamos el Mozo con el Jefe de Cocina
     private final HammingService hammingService;
 
     public HammingController(HammingService hammingService) {
@@ -18,19 +19,23 @@ public class HammingController {
     }
 
     @PostMapping("/procesar")
-    public ResponseEntity<String> procesarArchivo(
+    public ResponseEntity<byte[]> procesarArchivo(
             @RequestParam("file") MultipartFile archivo,
             @RequestParam("accion") String accion) {
 
         try {
-            // El mozo le delega todo el trabajo de decisión al servicio
-            String respuestaDelServicio = hammingService.ejecutarAccion(archivo, accion);
+            // Llamamos al service que ahora devuelve un array de bytes
+            byte[] resultado = hammingService.ejecutarAccionABytes(archivo, accion);
 
-            // Le mandamos a React exactamente lo que respondió el servicio
-            return ResponseEntity.ok(respuestaDelServicio);
+            // Configuramos la respuesta para que el navegador entienda que es un archivo
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"resultado.HA1\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resultado);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error interno al procesar el archivo");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

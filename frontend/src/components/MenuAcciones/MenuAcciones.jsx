@@ -41,17 +41,19 @@ const MenuAcciones = ({ onSelect }) => {
 
       <hr className={styles.divisor} />
 
-      {/* SECCIÓN 3: DESPROTEGER */}
+            {/* SECCIÓN 3: DESPROTEGER */}
       <div className={styles.seccion}>
         <h3 className={styles.subtitulo}>3. Desproteger Archivo</h3>
         <div className={styles.grupoBotones}>
-          <button className={styles.boton} onClick={() => onSelect('DESPROTEGER_SIN_CORREGIR')}>
+          {/* Agregamos el _8 para que Java sepa que el bloque es de 8 bits */}
+          <button className={styles.boton} onClick={() => onSelect('DESPROTEGER_8')}>
             <Unlock size={16} />
-            <span>Sin Corregir (.DEx)</span>
+            <span>Desproteger Bloque 8</span>
           </button>
-          <button className={`${styles.boton} ${styles.botonExito}`} onClick={() => onSelect('DESPROTEGER_CORRIGIENDO')}>
+          
+          <button className={`${styles.boton} ${styles.botonExito}`} onClick={() => onSelect('DESPROTEGER_1024')}>
             <ShieldCheck size={16} />
-            <span>Corrigiendo Errores (.DCx)</span>
+            <span>Desproteger Bloque 1024</span>
           </button>
         </div>
       </div>
