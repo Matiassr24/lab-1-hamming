@@ -1,32 +1,36 @@
 package com.hamming.backend.controller;
 
+import com.hamming.backend.service.HammingService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/hamming")
-@CrossOrigin(origins = "http://localhost:5173") // ¡EL PATOVICA! Deja pasar a tu React
+@CrossOrigin(origins = "http://localhost:5173")
 public class HammingController {
 
-    // Este es el endpoint que va a recibir tu archivo y la opción del menú
+    // Así es como vinculamos el Mozo con el Jefe de Cocina
+    private final HammingService hammingService;
+
+    public HammingController(HammingService hammingService) {
+        this.hammingService = hammingService;
+    }
+
     @PostMapping("/procesar")
     public ResponseEntity<String> procesarArchivo(
             @RequestParam("file") MultipartFile archivo,
             @RequestParam("accion") String accion) {
 
         try {
-            // 1. Leemos el nombre del archivo y la acción para ver si llegó bien
-            System.out.println("Llegó el archivo: " + archivo.getOriginalFilename());
-            System.out.println("Acción solicitada: " + accion);
+            // El mozo le delega todo el trabajo de decisión al servicio
+            String respuestaDelServicio = hammingService.ejecutarAccion(archivo, accion);
 
-            // Acá más adelante llamaremos al Service para hacer la matemática...
-
-            // 2. Le devolvemos un mensaje de éxito a React (por ahora en texto simple)
-            return ResponseEntity.ok("¡El backend recibió tu archivo perfectamente!");
+            // Le mandamos a React exactamente lo que respondió el servicio
+            return ResponseEntity.ok(respuestaDelServicio);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error al procesar");
+            return ResponseEntity.internalServerError().body("Error interno al procesar el archivo");
         }
     }
 }
