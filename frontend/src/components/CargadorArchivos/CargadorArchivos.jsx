@@ -6,7 +6,13 @@ const CargadorArchivos = ({ onFileDrop }) => {
   const inputRef = useRef(null);
 
   // 1. Definimos las extensiones que tu laboratorio va a manejar
-  const extensionesPermitidas = ['.txt', '.HA1', '.HA2', '.HA3'];
+  const extensionesPermitidas = [
+    '.txt', 
+    '.HA1', '.HA2', '.HA3', 
+    '.HE1', '.HE2', '.HE3', 
+    '.DE1', '.DE2', '.DE3', 
+    '.DC1', '.DC2', '.DC3'
+  ];
 
   const manejarCambioArchivo = (evento) => {
     const archivoSeleccionado = evento.target.files[0];
@@ -19,7 +25,7 @@ const CargadorArchivos = ({ onFileDrop }) => {
       if (esValido) {
         onFileDrop(archivoSeleccionado);
       } else {
-        alert("Archivo no permitido. Usá .txt o archivos protegidos (.HA1, .HA2, .HA3)");
+        alert("Archivo no permitido. Usá .txt o variables de Hamming (.HAx, .HEx, .DEx, .DCx)");
       }
     }
   };
@@ -39,7 +45,7 @@ const CargadorArchivos = ({ onFileDrop }) => {
         {/* 3. Actualizamos el atributo accept para que el buscador de Windows los muestre */}
         <input
           type="file" 
-          accept=".txt,.HA1,.HA2,.HA3"
+          accept=".txt,.HA1,.HA2,.HA3,.HE1,.HE2,.HE3,.DE1,.DE2,.DE3,.DC1,.DC2,.DC3"
           ref={inputRef}
           onChange={manejarCambioArchivo}
           className={styles.inputOculto}

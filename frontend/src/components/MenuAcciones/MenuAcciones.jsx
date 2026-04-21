@@ -41,32 +41,20 @@ const MenuAcciones = ({ onSelect }) => {
 
       <hr className={styles.divisor} />
 
-            {/* SECCIÓN 3: DESPROTEGER */}
+      {/* SECCIÓN 3: DESPROTEGER */}
       <div className={styles.seccion}>
         <h3 className={styles.subtitulo}>3. Desproteger Archivo</h3>
         <div className={styles.grupoBotones}>
-          {/* Agregamos el _8 para que Java sepa que el bloque es de 8 bits */}
-          <button className={styles.boton} onClick={() => onSelect('DESPROTEGER_8')}>
+          <button className={styles.boton} onClick={() => onSelect('DESPROTEGER_SIN_CORREGIR')}>
             <Unlock size={16} />
-            <span>Desproteger Bloque 8</span>
+            <span>Sin Corregir (.DEx)</span>
           </button>
           
-          <button className={`${styles.boton} ${styles.botonExito}`} onClick={() => onSelect('DESPROTEGER_1024')}>
+          <button className={`${styles.boton} ${styles.botonExito}`} onClick={() => onSelect('DESPROTEGER_CORRIGIENDO')}>
             <ShieldCheck size={16} />
-            <span>Desproteger Bloque 1024</span>
+            <span>Corrigiendo Errores (.DCx)</span>
           </button>
         </div>
-      </div>
-
-      <hr className={styles.divisor} />
-
-      {/* SECCIÓN 4: EXTRAS */}
-      <div className={styles.seccion}>
-        <h3 className={styles.subtitulo}>4. Seguridad Extra</h3>
-        <button className={styles.boton} onClick={() => onSelect('ENCRIPTAR')}>
-          <Key size={16} />
-          <span>Encriptar (Día y Hora)</span>
-        </button>
       </div>
 
     </div>
