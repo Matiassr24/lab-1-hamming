@@ -25,14 +25,42 @@ function App() {
   const link = document.createElement('a');
   link.href = url;
 
-  // DINAMISMO AQUÍ:
-  // Si la acción es INTRODUCIR_ERROR, le ponemos .HEx, si es PROTEGER_8 le ponemos .HA1
   let extension = ".txt";
-  if (accionSeleccionada === "PROTEGER_8") extension = ".HA1";
-  if (accionSeleccionada === "INTRODUCIR_ERROR") extension = "E.HA1";
-  if (accionSeleccionada === "DESPROTEGER_8") extension = "_recuperado.txt";
+  let baseName = archivoSeleccionado.name.substring(0, archivoSeleccionado.name.lastIndexOf('.')) || archivoSeleccionado.name;
+  let oldExt = archivoSeleccionado.name.substring(archivoSeleccionado.name.lastIndexOf('.') + 1).toUpperCase();
+  
+  // Determinamos el índice 'x' (1, 2 o 3)
+  let x = "1";
+  if (oldExt.endsWith("2") || accionSeleccionada.includes("1024")) x = "2";
+  if (oldExt.endsWith("3") || accionSeleccionada.includes("16384")) x = "3";
 
-  link.download =  archivoSeleccionado.name.split('.')[0] + extension;
+  switch (accionSeleccionada) {
+      case "PROTEGER_8":
+          extension = ".HA1";
+          break;
+      case "PROTEGER_1024":
+          extension = ".HA2";
+          break;
+      case "PROTEGER_16384":
+          extension = ".HA3";
+          break;
+      case "INTRODUCIR_ERROR":
+          extension = ".HE" + x;
+          break;
+      case "DESPROTEGER_SIN_CORREGIR":
+          extension = ".DE" + x;
+          break;
+      case "DESPROTEGER_CORRIGIENDO":
+          extension = ".DC" + x;
+          break;
+      case "ENCRIPTAR":
+          extension = ".ENC"; // A definir
+          break;
+      default:
+          extension = ".txt";
+  }
+
+  link.download = baseName + extension;
   link.click();
       console.log("Archivo descargado con éxito");
     }

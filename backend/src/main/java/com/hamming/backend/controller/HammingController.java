@@ -29,7 +29,7 @@ public class HammingController {
 
             // Configuramos la respuesta para que el navegador entienda que es un archivo
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"resultado.HA1\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"processed_" + archivo.getOriginalFilename() + "\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resultado);
 

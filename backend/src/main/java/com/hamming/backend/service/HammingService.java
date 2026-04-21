@@ -16,25 +16,45 @@ public class HammingService {
 
     public byte[] ejecutarAccionABytes(MultipartFile archivo, String accion) throws IOException {
         byte[] contenido = archivo.getBytes();
+        String filename = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename().toUpperCase() : "";
+
+        // Determinar tamaño de bloque en base a la extensión si es una acción sobre un archivo ya modificado
+        int mPowerForFile = 3; // Por defecto HA1 (8 bits)
+        if (filename.endsWith(".HA2") || filename.endsWith(".HE2") || filename.endsWith(".DE2") || filename.endsWith(".DC2")) {
+            mPowerForFile = 10;
+        } else if (filename.endsWith(".HA3") || filename.endsWith(".HE3") || filename.endsWith(".DE3") || filename.endsWith(".DC3")) {
+            mPowerForFile = 14;
+        }
 
         switch (accion) {
             case "PROTEGER_8":
-                return hammingEngine.proteger8(contenido);
+                return hammingEngine.proteger(contenido, 3);
+            case "PROTEGER_1024":
+                return hammingEngine.proteger(contenido, 10);
+            case "PROTEGER_16384":
+                return hammingEngine.proteger(contenido, 14);
 
             case "INTRODUCIR_ERROR":
-                // Esta es la función que agregaste recién para romper un bit al azar
-                return hammingEngine.introducirError(contenido);
+                return hammingEngine.introducirError(contenido, mPowerForFile);
 
+            case "DESPROTEGER_SIN_CORREGIR":
+                // Leemos el archivo, verificamos su extensión para saber mPower y NO corregimos
+                return hammingEngine.desproteger(contenido, mPowerForFile, false);
+
+            case "DESPROTEGER_CORRIGIENDO":
+                // Desprotege y corrige
+                return hammingEngine.desproteger(contenido, mPowerForFile, true);
+                
+            // Mantenemos esta por compatibilidad con el front antiguo temporalmente
             case "DESPROTEGER_8":
-                // Aquí usamos la lógica del Síndrome para limpiar y corregir
-                return hammingEngine.desproteger8(contenido);
+                return hammingEngine.desproteger(contenido, 3, true);
 
-            case "PROTEGER_1024":
-                // Esto lo dejás preparado para cuando hagamos la lógica de bloques grandes
+            case "ENCRIPTAR":
+                // TODO: Encriptar con Día y Hora
+                System.out.println("Encriptar aún no implementado");
                 return contenido;
 
             default:
-                // Si llega algo que no conocemos, devolvemos el archivo tal cual
                 System.out.println("Acción no reconocida: " + accion);
                 return contenido;
         }
