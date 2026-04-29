@@ -57,6 +57,17 @@ const MenuAcciones = ({ onSelect }) => {
         </div>
       </div>
 
+      <hr className={styles.divisor} />
+
+      {/* SECCIÓN 4: SEGURIDAD */}
+      <div className={styles.seccion}>
+        <h3 className={styles.subtitulo}>4. Seguridad</h3>
+        <button className={styles.boton} onClick={() => onSelect('ENCRIPTAR')}>
+          <Key size={16} />
+          <span>Encriptar Archivo (.ENC)</span>
+        </button>
+      </div>
+
     </div>
   );
 };

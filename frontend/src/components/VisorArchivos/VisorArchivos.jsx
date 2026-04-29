@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import styles from './VisorArchivos.module.css';
 
-const VisorArchivos = ({ archivo, accion }) => {
+const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
   const [contenidoOriginal, setContenidoOriginal] = useState('');
-  const [contenidoProcesado, setContenidoProcesado] = useState('');
-  const [posicionesError, setPosicionesError] = useState([]);
 
   // 1. Leer el archivo cuando se sube (Siempre como Texto/ASCII)
   useEffect(() => {
@@ -14,18 +12,12 @@ const VisorArchivos = ({ archivo, accion }) => {
       lector.onload = (evento) => {
         const texto = evento.target.result;
         setContenidoOriginal(texto);
-        setContenidoProcesado(''); // Reseteamos el panel derecho
       };
-      lector.readAsText(archivo, 'utf-8');
+      
+      const esBinario = archivo.name.match(/\.(HA|HE)\d$/i);
+      lector.readAsText(archivo, esBinario ? 'utf-16le' : 'utf-8');
     }
   }, [archivo]);
-
-  // 2. Escuchar la acción del menú (por ahora sin falsa simulación)
-  useEffect(() => {
-     // Si toca un botón, simplemente mantenemos el procesado igual al original
-     // ya que el backend se encarga de descargar el archivo real.
-     setContenidoProcesado(contenidoOriginal);
-  }, [accion, contenidoOriginal]);
 
   if (!archivo) {
     return (
@@ -34,6 +26,34 @@ const VisorArchivos = ({ archivo, accion }) => {
       </div>
     );
   }
+
+  const renderConErrores = () => {
+    if (!contenidoOriginal || !resultadoProcesado) return resultadoProcesado;
+    
+    if (accion && !accion.startsWith('INTRODUCIR_ERROR')) {
+      return resultadoProcesado;
+    }
+
+    const output = [];
+    const minLength = Math.min(contenidoOriginal.length, resultadoProcesado.length);
+
+    for (let i = 0; i < resultadoProcesado.length; i++) {
+      const charOriginal = contenidoOriginal[i];
+      const charProcesado = resultadoProcesado[i];
+
+      if (i < minLength && charOriginal !== charProcesado) {
+        output.push(
+          <span key={i} className={styles.letraError}>
+            {charProcesado}
+          </span>
+        );
+      } else {
+        output.push(charProcesado);
+      }
+    }
+
+    return output;
+  };
 
   return (
     <div className={styles.contenedorVisor}>
@@ -54,17 +74,13 @@ const VisorArchivos = ({ archivo, accion }) => {
           </div>
         </div>
 
-        {/* Panel Derecho: Explicación Educativa */}
+        {/* Panel Derecho: Procesado */}
         <div className={styles.panel}>
           <h3 className={styles.subtitulo}>
-            {accion ? `Acción actual: ${accion.replace('_', ' ')}` : 'Consola de Análisis'}
+            {accion ? `Resultado: ${accion.replace(/_/g, ' ')}` : 'Resultado Procesado'}
           </h3>
-          <div className={styles.areaTexto} style={{ color: '#aaa', fontStyle: 'italic' }}>
-            {!accion && "Sube un archivo y elige una acción del menú para procesarlo vía Backend."}
-            {accion && accion.startsWith('PROTEGER') && "El Backend procesará tu texto dividiéndolo en la cantidad de bits seleccionada, calculará las ecuaciones de paridad de Hamming y te descargará un binario con bits de redundancia intercalados."}
-            {accion && accion.startsWith('INTRODUCIR_ERROR') && "El Backend analizará el tamaño de bloque usado e invertirá el estado (XOR 1) de un bit aleatorio simulando ruido temporal de transmisión. Notarás diferencias hexadecimales de 1 bit si comparas ambos archivos."}
-            {accion && accion.startsWith('DESPROTEGER_SIN') && "Intentando decodificar el archivo asumiendo que es perfecto. Si hay errores ocultos, los bits de datos estarán rotos y verás caracteres de texto extraños."}
-            {accion && accion.startsWith('DESPROTEGER_CORRIGIENDO') && "El Backend pasará cada bloque por el algoritmo de Síndrome. Detectará qué paridad no cierra, ubicará numéricamente en base-2 el bit corrupto, lo invertirá para sanarlo y luego removerá toda la paridad para entregarte el texto puro."}
+          <div className={styles.areaTexto}>
+            {renderConErrores() || ''}
           </div>
         </div>
       </div>

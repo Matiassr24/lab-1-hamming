@@ -50,9 +50,7 @@ public class HammingService {
                 return hammingEngine.desproteger(contenido, 3, true);
 
             case "ENCRIPTAR":
-                // TODO: Encriptar con Día y Hora
-                System.out.println("Encriptar aún no implementado");
-                return contenido;
+                return hammingEngine.encriptar(contenido);
 
             default:
                 System.out.println("Acción no reconocida: " + accion);

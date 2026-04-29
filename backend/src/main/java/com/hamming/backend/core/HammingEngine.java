@@ -8,6 +8,7 @@ import java.util.List;
 public class HammingEngine {
 
     public byte[] proteger(byte[] data, int mPower) {
+        FileHeader header = new FileHeader(mPower, data.length);
         int n = 1 << mPower; // Tamaño del bloque total (ej: 8, 1024, 16384)
         int q = mPower; // Bits de paridad de Hamming
         int k = n - q - 1; // Bits de datos puros
@@ -55,14 +56,42 @@ public class HammingEngine {
                 bitsProtegidos.add(block[j]);
             }
         }
-        return bitsToBytes(bitsProtegidos);
+        byte[] protectedData = bitsToBytes(bitsProtegidos);
+        
+        // Unir Header + Datos Protegidos
+        byte[] headerBytes = header.toBytes();
+        byte[] result = new byte[headerBytes.length + protectedData.length];
+        System.arraycopy(headerBytes, 0, result, 0, headerBytes.length);
+        System.arraycopy(protectedData, 0, result, headerBytes.length, protectedData.length);
+        
+        return result;
     }
 
-    public byte[] desproteger(byte[] datosProtegidos, int mPower, boolean corregir) {
+    public byte[] desproteger(byte[] dataConHeader, int mPowerDefault, boolean corregir) {
+        int mPower = mPowerDefault;
+        byte[] rawData;
+        int originalSize = -1;
+
+        // Intentar leer el header de 4 bytes
+        if (FileHeader.hasValidHeader(dataConHeader)) {
+            FileHeader header = new FileHeader(dataConHeader);
+            mPower = header.getMPower();
+            originalSize = header.getOriginalSize();
+            
+            // Extraer solo los datos (saltar los 4 bytes del header)
+            rawData = new byte[dataConHeader.length - FileHeader.HEADER_SIZE];
+            System.arraycopy(dataConHeader, FileHeader.HEADER_SIZE, rawData, 0, rawData.length);
+            System.out.println("DEBUG: Header 32 bits detectado. mPower=" + mPower + ", OriginalSize=" + originalSize);
+        } else {
+            // No hay header o está mal formado, usamos modo compatible (legacy)
+            rawData = dataConHeader;
+            System.out.println("DEBUG: No se detectó header válido. Usando mPower por defecto: " + mPowerDefault);
+        }
+
         int n = 1 << mPower;
         int q = mPower;
 
-        List<Integer> bitsRecibidos = bytesToBits(datosProtegidos);
+        List<Integer> bitsRecibidos = bytesToBits(rawData);
         List<Integer> bitsRecuperados = new ArrayList<>();
 
         for (int i = 0; i < bitsRecibidos.size(); i += n) {
@@ -106,6 +135,15 @@ public class HammingEngine {
         
         // Removemos los bytes nulos al final (padding extra)
         byte[] rawBytes = bitsToBytes(bitsRecuperados);
+        
+        // Si tenemos el tamaño original del header, truncamos exactamente
+        if (originalSize >= 0 && originalSize <= rawBytes.length) {
+            byte[] trimmedBytes = new byte[originalSize];
+            System.arraycopy(rawBytes, 0, trimmedBytes, 0, originalSize);
+            return trimmedBytes;
+        }
+
+        // Si no hay header, usamos el método heurístico de remover ceros al final
         int validLength = rawBytes.length;
         while (validLength > 0 && rawBytes[validLength - 1] == 0) {
             validLength--;
@@ -116,11 +154,24 @@ public class HammingEngine {
         return trimmedBytes;
     }
 
-    public byte[] introducirError(byte[] datosProtegidos, int mPower) {
-        if (datosProtegidos.length == 0) return datosProtegidos;
+    public byte[] introducirError(byte[] dataConHeader, int mPowerDefault) {
+        if (dataConHeader.length == 0) return dataConHeader;
+
+        int mPower = mPowerDefault;
+        int headerOffset = 0;
+
+        // Si hay header, lo saltamos para no corromper la metadata
+        if (FileHeader.hasValidHeader(dataConHeader)) {
+            headerOffset = FileHeader.HEADER_SIZE;
+        }
 
         int n = 1 << mPower;
-        List<Integer> bits = bytesToBits(datosProtegidos);
+        
+        // Solo introducimos errores en la parte de DATOS
+        byte[] dataOnly = new byte[dataConHeader.length - headerOffset];
+        System.arraycopy(dataConHeader, headerOffset, dataOnly, 0, dataOnly.length);
+
+        List<Integer> bits = bytesToBits(dataOnly);
         int erroresContados = 0;
         double probabilidadPorModulo = 0.3; // 30% de probabilidad de que un módulo falle
 
@@ -140,7 +191,26 @@ public class HammingEngine {
         }
         
         System.out.println("DEBUG: Se introdujeron " + erroresContados + " errores en módulos de " + n + " bits.");
-        return bitsToBytes(bits);
+        byte[] corruptedData = bitsToBytes(bits);
+        
+        // Reconstruir con el header original (sin tocar el header)
+        byte[] result = new byte[dataConHeader.length];
+        if (headerOffset > 0) {
+            System.arraycopy(dataConHeader, 0, result, 0, headerOffset);
+        }
+        System.arraycopy(corruptedData, 0, result, headerOffset, corruptedData.length);
+        
+        return result;
+    }
+
+    public byte[] encriptar(byte[] data) {
+        // Encriptación simple sin header (según pedido de simplificación)
+        byte[] result = new byte[data.length];
+        byte key = 0x55; 
+        for (int i = 0; i < data.length; i++) {
+            result[i] = (byte) (data[i] ^ key);
+        }
+        return result;
     }
 
     private boolean isPowerOfTwo(int n) {
