@@ -1,9 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileText } from 'lucide-react';
 import styles from './VisorArchivos.module.css';
 
 const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
   const [contenidoOriginal, setContenidoOriginal] = useState('');
+  const panelOriginalRef = useRef(null);
+  const panelProcesadoRef = useRef(null);
+
+  const sincronizarScroll = (e, targetRef) => {
+    if (targetRef.current) {
+      targetRef.current.scrollTop = e.target.scrollTop;
+    }
+  };
 
   // 1. Leer el archivo cuando se sube (Siempre como Texto/ASCII)
   useEffect(() => {
@@ -30,7 +38,7 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
   const renderConErrores = () => {
     if (!contenidoOriginal || !resultadoProcesado) return resultadoProcesado;
     
-    if (accion && !accion.startsWith('INTRODUCIR_ERROR')) {
+    if (accion !== 'DESPROTEGER_SIN_CORREGIR' && !archivo.name.match(/\.DE\d$/i)) {
       return resultadoProcesado;
     }
 
@@ -69,7 +77,11 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
         {/* Panel Izquierdo: Original */}
         <div className={styles.panel}>
           <h3 className={styles.subtitulo}>Texto Original</h3>
-          <div className={styles.areaTexto}>
+          <div 
+            ref={panelOriginalRef} 
+            className={styles.areaTexto}
+            onScroll={(e) => sincronizarScroll(e, panelProcesadoRef)}
+          >
             {contenidoOriginal}
           </div>
         </div>
@@ -79,7 +91,11 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
           <h3 className={styles.subtitulo}>
             {accion ? `Resultado: ${accion.replace(/_/g, ' ')}` : 'Resultado Procesado'}
           </h3>
-          <div className={styles.areaTexto}>
+          <div 
+            ref={panelProcesadoRef} 
+            className={styles.areaTexto}
+            onScroll={(e) => sincronizarScroll(e, panelOriginalRef)}
+          >
             {renderConErrores() || ''}
           </div>
         </div>
