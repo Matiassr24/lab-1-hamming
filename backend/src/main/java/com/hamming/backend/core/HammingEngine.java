@@ -173,7 +173,7 @@ public class HammingEngine {
 
         List<Integer> bits = bytesToBits(dataOnly);
         int erroresContados = 0;
-        double probabilidadPorModulo = 0.3; // 30% de probabilidad de que un módulo falle
+        double probabilidadPorModulo = 0.5; // 50% de probabilidad de que un módulo falle
 
         // Iterar por bloques/módulos
         for (int i = 0; i < bits.size(); i += n) {

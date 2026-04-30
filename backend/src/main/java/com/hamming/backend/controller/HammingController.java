@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/hamming")
-@CrossOrigin(origins = "http://localhost:5173") // El puerto de tu React
 public class HammingController {
 
     private final HammingService hammingService;

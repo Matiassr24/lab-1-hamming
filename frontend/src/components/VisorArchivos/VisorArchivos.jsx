@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { FileText } from 'lucide-react';
 import styles from './VisorArchivos.module.css';
 
-const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
-  const [contenidoOriginal, setContenidoOriginal] = useState('');
+const VisorArchivos = ({ archivo, accion, resultadoProcesado, referenciaManual, nombreReferencia }) => {
+  const [contenidoTrabajoOriginal, setContenidoTrabajoOriginal] = useState('');
+  const [vistaIzquierda, setVistaIzquierda] = useState('referencia'); // 'referencia' o 'trabajo'
   const panelOriginalRef = useRef(null);
   const panelProcesadoRef = useRef(null);
 
@@ -13,40 +14,49 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
     }
   };
 
-  // 1. Leer el archivo cuando se sube (Siempre como Texto/ASCII)
   useEffect(() => {
     if (archivo) {
       const lector = new FileReader();
       lector.onload = (evento) => {
-        const texto = evento.target.result;
-        setContenidoOriginal(texto);
+        setContenidoTrabajoOriginal(evento.target.result);
       };
-      
       const esBinario = archivo.name.match(/\.(HA|HE)\d$/i);
       lector.readAsText(archivo, esBinario ? 'utf-16le' : 'utf-8');
     }
   }, [archivo]);
 
+  // Si no hay referencia manual, forzamos la vista a 'trabajo'
+  useEffect(() => {
+    if (!referenciaManual) {
+      setVistaIzquierda('trabajo');
+    } else {
+      setVistaIzquierda('referencia');
+    }
+  }, [referenciaManual]);
+
   if (!archivo) {
     return (
       <div className={styles.contenedorVacio}>
-        <p>Subí un archivo .txt para comenzar a trabajar.</p>
+        <p>Seleccioná un <b>Archivo de Trabajo</b> para ver su contenido aquí.</p>
       </div>
     );
   }
 
+  const obtenerContenidoIzquierdo = () => {
+    return vistaIzquierda === 'referencia' ? (referenciaManual || '') : contenidoTrabajoOriginal;
+  };
+
   const renderConErrores = () => {
-    if (!contenidoOriginal || !resultadoProcesado) return resultadoProcesado;
+    if (!resultadoProcesado) return '';
     
-    if (accion !== 'DESPROTEGER_SIN_CORREGIR' && !archivo.name.match(/\.DE\d$/i)) {
-      return resultadoProcesado;
-    }
+    const baseParaComparar = obtenerContenidoIzquierdo();
+    if (!baseParaComparar) return resultadoProcesado;
 
     const output = [];
-    const minLength = Math.min(contenidoOriginal.length, resultadoProcesado.length);
+    const minLength = Math.min(baseParaComparar.length, resultadoProcesado.length);
 
     for (let i = 0; i < resultadoProcesado.length; i++) {
-      const charOriginal = contenidoOriginal[i];
+      const charOriginal = baseParaComparar[i];
       const charProcesado = resultadoProcesado[i];
 
       if (i < minLength && charOriginal !== charProcesado) {
@@ -59,7 +69,6 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
         output.push(charProcesado);
       }
     }
-
     return output;
   };
 
@@ -68,27 +77,47 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
       <div className={styles.cabecera}>
         <div className={styles.tituloWrapper}>
           <FileText className={styles.iconoTitulo} />
-          <h2 className={styles.titulo}>Visor de Textos</h2>
+          <h2 className={styles.titulo}>Visor Comparativo</h2>
         </div>
-        <span className={styles.etiquetaArchivo}>Archivo: {archivo.name}</span>
+        <div className={styles.metadatos}>
+          <span className={styles.etiquetaArchivo}>Trabajo: <b>{archivo.name}</b></span>
+          {nombreReferencia && (
+            <span className={styles.etiquetaReferencia}>Referencia: <b>{nombreReferencia}</b></span>
+          )}
+        </div>
       </div>
 
       <div className={styles.contenedorDoble}>
-        {/* Panel Izquierdo: Original */}
+        {/* Panel Izquierdo: Entrada / Referencia */}
         <div className={styles.panel}>
-          <h3 className={styles.subtitulo}>Texto Original</h3>
+          <div className={styles.selectorPestañas}>
+            <button 
+              className={`${styles.pestaña} ${vistaIzquierda === 'referencia' ? styles.pestañaActiva : ''}`}
+              onClick={() => setVistaIzquierda('referencia')}
+              disabled={!referenciaManual}
+            >
+              Referencia
+            </button>
+            <button 
+              className={`${styles.pestaña} ${vistaIzquierda === 'trabajo' ? styles.pestañaActiva : ''}`}
+              onClick={() => setVistaIzquierda('trabajo')}
+            >
+              Archivo Trabajo
+            </button>
+          </div>
+          
           <div 
             ref={panelOriginalRef} 
             className={styles.areaTexto}
             onScroll={(e) => sincronizarScroll(e, panelProcesadoRef)}
           >
-            {contenidoOriginal}
+            {obtenerContenidoIzquierdo()}
           </div>
         </div>
 
-        {/* Panel Derecho: Procesado */}
+        {/* Panel Derecho: Salida */}
         <div className={styles.panel}>
-          <h3 className={styles.subtitulo}>
+          <h3 className={styles.subtituloResultado}>
             {accion ? `Resultado: ${accion.replace(/_/g, ' ')}` : 'Resultado Procesado'}
           </h3>
           <div 
@@ -96,7 +125,7 @@ const VisorArchivos = ({ archivo, accion, resultadoProcesado }) => {
             className={styles.areaTexto}
             onScroll={(e) => sincronizarScroll(e, panelOriginalRef)}
           >
-            {renderConErrores() || ''}
+            {renderConErrores()}
           </div>
         </div>
       </div>

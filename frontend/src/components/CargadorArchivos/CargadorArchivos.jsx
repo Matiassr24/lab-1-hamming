@@ -2,10 +2,9 @@ import { useRef } from 'react';
 import { CloudUpload } from 'lucide-react';
 import styles from './CargadorArchivos.module.css';
 
-const CargadorArchivos = ({ onFileDrop }) => {
+const CargadorArchivos = ({ onFileDrop, titulo, subtitulo, colorClass, icono: Icono = CloudUpload }) => {
   const inputRef = useRef(null);
 
-  // 1. Definimos las extensiones que tu laboratorio va a manejar
   const extensionesPermitidas = [
     '.txt', 
     '.HA1', '.HA2', '.HA3', 
@@ -19,8 +18,7 @@ const CargadorArchivos = ({ onFileDrop }) => {
     
     if (archivoSeleccionado) {
       const nombre = archivoSeleccionado.name;
-      // 2. Verificamos si el archivo termina en alguna de nuestras extensiones
-      const esValido = extensionesPermitidas.some(ext => nombre.endsWith(ext));
+      const esValido = extensionesPermitidas.some(ext => nombre.toLowerCase().endsWith(ext.toLowerCase()));
 
       if (esValido) {
         onFileDrop(archivoSeleccionado);
@@ -31,18 +29,17 @@ const CargadorArchivos = ({ onFileDrop }) => {
   };
 
   return (
-    <div className={styles.contenedorCargador}>
-      <h2 className={styles.titulo}>Archivo de Trabajo</h2>
+    <div className={`${styles.contenedorCargador} ${colorClass ? styles[colorClass] : ''}`}>
+      <h2 className={styles.titulo}>{titulo || 'Archivo de Trabajo'}</h2>
 
       <div
         className={styles.areaSubida}
         onClick={() => inputRef.current.click()}
       >
-        <CloudUpload className={styles.iconoNube} />
+        <Icono className={styles.iconoNube} />
         <p className={styles.textoSubida}>
-          Haz clic aquí para seleccionar tu archivo (.txt, .HA1, etc.)
+          {subtitulo || 'Seleccionar archivo'}
         </p>
-        {/* 3. Actualizamos el atributo accept para que el buscador de Windows los muestre */}
         <input
           type="file" 
           accept=".txt,.HA1,.HA2,.HA3,.HE1,.HE2,.HE3,.DE1,.DE2,.DE3,.DC1,.DC2,.DC3"
